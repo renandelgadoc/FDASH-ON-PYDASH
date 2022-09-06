@@ -37,12 +37,12 @@ class R2A_FDash(IR2A):
     # partições da figura 2a
     def partition_buffering_time(self, t):
         # valor da tabela 1
-        T = 35
+        T = 20
         SH = 0
         C = 0
         L = 0
 
-        if 0 < t < T:
+        if 0 <= t < T:
             SH = self.open_left(t, 2 * T / 3, T)
         if 2 * T / 3 < t < 4 * T:
             C = self.triangular(t, 2 * T / 3, T, 4 * T)
@@ -54,7 +54,7 @@ class R2A_FDash(IR2A):
     # partições da figura 2b
     def partition_differential_of_buffering_time(self, dt):
         # valor da tabela 1
-        T = 35
+        T = 20
         F = 0
         ST = 0
         R = 0
@@ -63,7 +63,7 @@ class R2A_FDash(IR2A):
             F = self.open_left(dt, -2 * T / 3, 0)
         if (-2 * T / 3) < dt < (4 * T):
             ST = self.triangular(dt, -2 * T / 3, 0, 4 * T)
-        if dt > T:
+        if dt > 0:
             R = self.open_right(dt, 0, 4 * T)
 
         return F, ST, R
