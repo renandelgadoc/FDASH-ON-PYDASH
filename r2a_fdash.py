@@ -14,6 +14,7 @@ class R2A_FDash(IR2A):
         self.qi = []
         # t[i] e t[i-1]
         self.buffers = [-1, -1]
+        self.target_buffer = 5
 
     def open_left(self, x, alpha, beta):
         if x < alpha:
@@ -37,43 +38,38 @@ class R2A_FDash(IR2A):
     # partições da figura 2a
     def partition_buffering_time(self, t):
         # valor da tabela 1
-        T = 15
         SH = 0
         C = 0
         L = 0
 
-        if 0 <= t < T:
-            SH = self.open_left(t, 2 * T / 3, T)
-        if 2 * T / 3 < t < 4 * T:
-            C = self.triangular(t, 2 * T / 3, T, 4 * T)
-        if t > T:
-            L = self.open_right(t, T, 4 * T)
+        if 0 <= t < self.target_buffer:
+            SH = self.open_left(t, 2 * self.target_buffer / 3, self.target_buffer)
+        if 2 * self.target_buffer / 3 < t < 4 * self.target_buffer:
+            C = self.triangular(t, 2 * self.target_buffer / 3, self.target_buffer, 4 * self.target_buffer)
+        if t > self.target_buffer:
+            L = self.open_right(t, self.target_buffer, 4 * self.target_buffer)
 
         return SH, C, L
 
     # partições da figura 2b
     def partition_differential_of_buffering_time(self, dt):
         # valor da tabela 1
-        T = 15
         F = 0
         ST = 0
         R = 0
 
-        if (-2 * T / 3) < dt < 0:
-            F = self.open_left(dt, -2 * T / 3, 0)
-        if (-2 * T / 3) < dt < (4 * T):
-            ST = self.triangular(dt, -2 * T / 3, 0, 4 * T)
+        if (-2 * self.target_buffer / 3) < dt < 0:
+            F = self.open_left(dt, -2 * self.target_buffer / 3, 0)
+        if (-2 * self.target_buffer / 3) < dt < (4 * self.target_buffer):
+            ST = self.triangular(dt, -2 * self.target_buffer / 3, 0, 4 * self.target_buffer)
         if dt > 0:
-            R = self.open_right(dt, 0, 4 * T)
+            R = self.open_right(dt, 0, 4 * self.target_buffer)
 
         return F, ST, R
 
     def output(self, t, dt):
         SH, C, L = self.partition_buffering_time(t)
         F, ST, R = self.partition_differential_of_buffering_time(dt)
-
-        # print("parametros: ", end="")
-        # print(SH, C, L, F, ST, R)
 
         r1 = min(SH, F)
         r2 = min(C, F)
@@ -85,18 +81,12 @@ class R2A_FDash(IR2A):
         r8 = min(C, R)
         r9 = min(L, R)
 
-        # print("r:", end='')
-        # print(r1, r2, r3, r4, r5, r6, r7, r8, r9)
-
         # equações (2...6)
         I = abs(r9)
         SI = np.linalg.norm(np.array((r6, r8)))
         NC = np.linalg.norm(np.array((r3, r5, r7)))
         SR = np.linalg.norm(np.array((r2, r4)))
         R = abs(r1)
-
-        # print("variacoes:", end='')
-        # print(I, SI, NC, SR, R)
 
         # valores da tabela 1
         # equação (1)
@@ -127,8 +117,6 @@ class R2A_FDash(IR2A):
         avg = mean(self.throughputs[-10:])
 
 
-        # print(self.buffers)
-
         # inicio ele como 1 pra não bugar até ter o t[i] e t[i-1]
         f = 1
 
@@ -136,13 +124,8 @@ class R2A_FDash(IR2A):
         if self.buffers[1] > -1:
             buffer = self.buffers[0]
             last_buffer = self.buffers[1]
-            # print("buffer: ", end='')
-            # print(buffer, last_buffer)
             # t e Δt
             f = self.output(buffer, buffer - last_buffer)
-            # print("output: " + str(f))
-
-        # print("avg: " + str(avg))
 
         with open('/home/renan/Documents/Faculdade/Redes/pydash/results/f.txt', 'a') as f_salvar:
             f_salvar.write(str(f))
@@ -150,8 +133,6 @@ class R2A_FDash(IR2A):
 
         # equação (8)
         b = avg * f
-
-        print("b:" + str(b))
 
         selected_qi = self.qi[0]
         for i in self.qi:
