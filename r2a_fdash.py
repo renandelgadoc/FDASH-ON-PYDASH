@@ -14,20 +14,20 @@ class R2A_FDash(IR2A):
         self.qi = []
         # t[i] e t[i-1]
         self.buffers = [-1, -1]
-        self.target_buffer = 5
+        self.target_buffer = 15
 
     def open_left(self, x, alpha, beta):
-        if x < alpha:
+        if x <= alpha:
             return 1
-        if alpha < x and x <= beta:
+        if alpha < x and x < beta:
             return (beta - x) / (beta - alpha)
         else:
             return 0
 
     def open_right(self, x, alpha, beta):
-        if x < alpha:
+        if x <= alpha:
             return 0
-        if alpha < x and x <= beta:
+        if alpha < x and x < beta:
             return (x - alpha) / (beta - alpha)
         else:
             return 1
@@ -38,32 +38,34 @@ class R2A_FDash(IR2A):
     # partições da figura 2a
     def partition_buffering_time(self, t):
         # valor da tabela 1
+        T = self.target_buffer
         SH = 0
         C = 0
         L = 0
 
-        if 0 <= t < self.target_buffer:
-            SH = self.open_left(t, 2 * self.target_buffer / 3, self.target_buffer)
-        if 2 * self.target_buffer / 3 < t < 4 * self.target_buffer:
-            C = self.triangular(t, 2 * self.target_buffer / 3, self.target_buffer, 4 * self.target_buffer)
-        if t > self.target_buffer:
-            L = self.open_right(t, self.target_buffer, 4 * self.target_buffer)
+        if 0 <= t < T:
+            SH = self.open_left(t, 2 * T / 3, T)
+        if 2 * T / 3 < t < 4 * T:
+            C = self.triangular(t, 2 * T / 3, T, 4 * T)
+        if t > T:
+            L = self.open_right(t, T, 4 * T)
 
         return SH, C, L
 
     # partições da figura 2b
     def partition_differential_of_buffering_time(self, dt):
         # valor da tabela 1
+        T = self.target_buffer
         F = 0
         ST = 0
         R = 0
 
-        if (-2 * self.target_buffer / 3) < dt < 0:
-            F = self.open_left(dt, -2 * self.target_buffer / 3, 0)
-        if (-2 * self.target_buffer / 3) < dt < (4 * self.target_buffer):
-            ST = self.triangular(dt, -2 * self.target_buffer / 3, 0, 4 * self.target_buffer)
+        if dt < 0:
+            F = self.open_left(dt, -2 * T / 3, 0)
+        if (-2 * T / 3) < dt < (4 * T):
+            ST = self.triangular(dt, -2 * T / 3, 0, 4 * T)
         if dt > 0:
-            R = self.open_right(dt, 0, 4 * self.target_buffer)
+            R = self.open_right(dt, 0, 4 * T)
 
         return F, ST, R
 
@@ -111,12 +113,7 @@ class R2A_FDash(IR2A):
 
         self.request_time = time.perf_counter()
 
-        # equação (9)
-        # no arquivo que vem com implementação fazendo a média ele divide a média por 2, ai deixei essa opção comentada
-        # avg = mean(self.throughputs) / 2
-        avg = mean(self.throughputs[-10:])
-
-
+        print(self.buffers)
         # inicio ele como 1 pra não bugar até ter o t[i] e t[i-1]
         f = 1
 
@@ -127,10 +124,8 @@ class R2A_FDash(IR2A):
             # t e Δt
             f = self.output(buffer, buffer - last_buffer)
 
-        with open('/home/renan/Documents/Faculdade/Redes/pydash/results/f.txt', 'a') as f_salvar:
-            f_salvar.write(str(f))
-            f_salvar.write('\n')
-
+        # equação (9)
+        avg = mean(self.throughputs[-10:])
         # equação (8)
         b = avg * f
 
