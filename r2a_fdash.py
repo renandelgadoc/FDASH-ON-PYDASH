@@ -37,7 +37,7 @@ class R2A_FDash(IR2A):
     # partições da figura 2a
     def partition_buffering_time(self, t):
         # valor da tabela 1
-        T = 20
+        T = 15
         SH = 0
         C = 0
         L = 0
@@ -54,7 +54,7 @@ class R2A_FDash(IR2A):
     # partições da figura 2b
     def partition_differential_of_buffering_time(self, dt):
         # valor da tabela 1
-        T = 20
+        T = 15
         F = 0
         ST = 0
         R = 0
@@ -72,8 +72,8 @@ class R2A_FDash(IR2A):
         SH, C, L = self.partition_buffering_time(t)
         F, ST, R = self.partition_differential_of_buffering_time(dt)
 
-        print("parametros: ", end="")
-        print(SH, C, L, F, ST, R)
+        # print("parametros: ", end="")
+        # print(SH, C, L, F, ST, R)
 
         r1 = min(SH, F)
         r2 = min(C, F)
@@ -85,8 +85,8 @@ class R2A_FDash(IR2A):
         r8 = min(C, R)
         r9 = min(L, R)
 
-        print("r:", end='')
-        print(r1, r2, r3, r4, r5, r6, r7, r8, r9)
+        # print("r:", end='')
+        # print(r1, r2, r3, r4, r5, r6, r7, r8, r9)
 
         # equações (2...6)
         I = abs(r9)
@@ -95,8 +95,8 @@ class R2A_FDash(IR2A):
         SR = np.linalg.norm(np.array((r2, r4)))
         R = abs(r1)
 
-        print("variacoes:", end='')
-        print(I, SI, NC, SR, R)
+        # print("variacoes:", end='')
+        # print(I, SI, NC, SR, R)
 
         # valores da tabela 1
         # equação (1)
@@ -124,11 +124,10 @@ class R2A_FDash(IR2A):
         # equação (9)
         # no arquivo que vem com implementação fazendo a média ele divide a média por 2, ai deixei essa opção comentada
         # avg = mean(self.throughputs) / 2
-        avg = mean(self.throughputs)
+        avg = mean(self.throughputs[-10:])
 
-        print("avg: " + str(avg))
 
-        print(self.buffers)
+        # print(self.buffers)
 
         # inicio ele como 1 pra não bugar até ter o t[i] e t[i-1]
         f = 1
@@ -137,11 +136,17 @@ class R2A_FDash(IR2A):
         if self.buffers[1] > -1:
             buffer = self.buffers[0]
             last_buffer = self.buffers[1]
-            print("buffer: ", end='')
-            print(buffer, last_buffer)
+            # print("buffer: ", end='')
+            # print(buffer, last_buffer)
             # t e Δt
             f = self.output(buffer, buffer - last_buffer)
-            print("output: " + str(f))
+            # print("output: " + str(f))
+
+        # print("avg: " + str(avg))
+
+        with open('/home/renan/Documents/Faculdade/Redes/pydash/results/f.txt', 'a') as f_salvar:
+            f_salvar.write(str(f))
+            f_salvar.write('\n')
 
         # equação (8)
         b = avg * f
@@ -158,7 +163,6 @@ class R2A_FDash(IR2A):
 
     def handle_segment_size_response(self, msg):
         t = time.perf_counter() - self.request_time
-
         lista_buffers = self.whiteboard.get_playback_buffer_size()
 
         # dois ultimos valores do buffer no momomento que um pacote é recebido
@@ -168,7 +172,7 @@ class R2A_FDash(IR2A):
             self.buffers = self.buffers[:-1]
 
         # equação (7)
-        r = (msg.get_bit_length() * 1) / t
+        r = msg.get_bit_length() / t
         self.throughputs.append(r)
         self.send_up(msg)
 
